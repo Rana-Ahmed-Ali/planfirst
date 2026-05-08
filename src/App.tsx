@@ -29,10 +29,13 @@ import {
   Trash2,
   Paperclip,
   FileText,
-  X
+  X,
+  Settings,
+  Key
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "./lib/utils";
+import { getApiKeys, saveApiKeys, ApiKeys } from "./lib/keys";
 
 const LOADING_MESSAGES = [
   "Analyzing strategic viability...",
@@ -145,6 +148,8 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [apiKeys, setApiKeys] = useState<ApiKeys>(() => getApiKeys());
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -242,12 +247,17 @@ export default function App() {
 
     const isOpenRouter = selectedModel.includes("/");
     const isCustomPaki = selectedModel === "paki-gpt";
-    const apiKey = isCustomPaki ? "LOCAL" : (isOpenRouter ? process.env.OPENROUTER_API_KEY : process.env.GEMINI_API_KEY);
     
-    if (!isCustomPaki && (!apiKey || apiKey === "MY_GEMINI_API_KEY")) {
-      setError(`${isOpenRouter ? 'OpenRouter' : 'Gemini'} API key is missing. Please add it to your .env file.`);
-      setIsLoading(false);
-      return;
+    // Check if keys are provided
+    if (!isCustomPaki) {
+      const activeKey = isOpenRouter ? apiKeys.openrouter : apiKeys.gemini;
+      
+      if (!activeKey) {
+        setError(`${isOpenRouter ? 'OpenRouter' : 'Gemini'} API key is missing. Click the settings icon to add your own API key.`);
+        setIsSettingsOpen(true);
+        setIsLoading(false);
+        return;
+      }
     }
 
     try {
@@ -262,7 +272,7 @@ export default function App() {
          history[0].parts[0].text += contextStr;
       }
 
-      const responses = await generateResponse(history, selectedModel);
+      const responses = await generateResponse(history, selectedModel, apiKeys);
       
       const newMessages: ChatMessage[] = responses.map(r => ({
         role: "assistant",
@@ -401,9 +411,26 @@ export default function App() {
                   >
                     <RefreshCw className="w-5 h-5" />
                  </button>
+                 <button 
+                    onClick={() => setIsSettingsOpen(true)} 
+                    className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-emerald-400"
+                    title="API Settings"
+                  >
+                    <Settings className="w-5 h-5" />
+                 </button>
                </div>
             )}
+            {messages.length === 0 && (
+              <button 
+                onClick={() => setIsSettingsOpen(true)} 
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-emerald-400"
+                title="API Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            )}
           </div>
+
           
           {/* Progress Bar */}
           {messages.length > 0 && (
@@ -575,6 +602,107 @@ export default function App() {
           </p>
         </footer>
       </div>
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        keys={apiKeys} 
+        onSave={(newKeys) => {
+          setApiKeys(newKeys);
+          saveApiKeys(newKeys);
+          setIsSettingsOpen(false);
+        }} 
+      />
+    </div>
+  );
+}
+
+function SettingsModal({ isOpen, onClose, keys, onSave }: { isOpen: boolean, onClose: () => void, keys: ApiKeys, onSave: (keys: ApiKeys) => void }) {
+  const [geminiKey, setGeminiKey] = useState(keys.gemini || "");
+  const [openrouterKey, setOpenrouterKey] = useState(keys.openrouter || "");
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+      />
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="relative w-full max-w-md bg-[#0F1117] border border-slate-800 rounded-3xl shadow-2xl overflow-hidden"
+      >
+        <div className="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400">
+              <Settings className="w-5 h-5" />
+            </div>
+            <h2 className="text-xl font-bold text-white">API Configuration</h2>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <div className="p-6 space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                <Key className="w-3 h-3" /> Google Gemini API Key
+              </label>
+              <input 
+                type="password" 
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder="Paste your Gemini API key here..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+              <p className="text-[10px] text-slate-500">
+                Get yours at <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-emerald-500 hover:underline">Google AI Studio</a>
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                <Key className="w-3 h-3" /> OpenRouter API Key
+              </label>
+              <input 
+                type="password" 
+                value={openrouterKey}
+                onChange={(e) => setOpenrouterKey(e.target.value)}
+                placeholder="Paste your OpenRouter API key here..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500 transition-colors"
+              />
+              <p className="text-[10px] text-slate-500">
+                Get yours at <a href="https://openrouter.ai/keys" target="_blank" rel="noreferrer" className="text-emerald-500 hover:underline">OpenRouter.ai</a>
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10 text-[11px] text-blue-400 leading-relaxed">
+            <strong>Security Note:</strong> Your API keys are stored locally in your browser's <code>localStorage</code>. They are only sent to the respective AI providers and never to our servers.
+          </div>
+        </div>
+
+        <div className="p-6 bg-slate-900/50 border-t border-slate-800 flex gap-3">
+          <button 
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 font-bold hover:bg-slate-800 transition-colors text-sm"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={() => onSave({ gemini: geminiKey, openrouter: openrouterKey })}
+            className="flex-1 py-3 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20 text-sm"
+          >
+            Save Configuration
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

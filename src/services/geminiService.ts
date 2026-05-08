@@ -126,12 +126,14 @@ Otherwise, be exceptionally helpful in executing their specific requests (e.g. w
 - Never invent benchmarks.
 `;
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
-
 export async function generateResponse(
   history: { role: "user" | "model"; parts: { text: string }[] }[],
-  modelId: string = "gemini-2.5-flash"
+  modelId: string = "gemini-2.5-flash",
+  userKeys?: { gemini?: string; openrouter?: string }
 ) {
+  const GEMINI_KEY = userKeys?.gemini || '';
+  const OPENROUTER_KEY = userKeys?.openrouter || '';
+
   try {
     let text = "";
 
@@ -161,8 +163,8 @@ export async function generateResponse(
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "HTTP-Referer": process.env.APP_URL || "http://localhost:3000",
+          "Authorization": `Bearer ${OPENROUTER_KEY}`,
+          "HTTP-Referer": (typeof process !== 'undefined' ? process.env.APP_URL : '') || "http://localhost:3000",
           "X-Title": "Planfirst by Ahmed Ali",
           "Content-Type": "application/json"
         },
@@ -182,6 +184,7 @@ export async function generateResponse(
       text = data.choices[0].message.content;
     } else {
       // Gemini SDK Path
+      const ai = new GoogleGenAI({ apiKey: GEMINI_KEY });
       const response = await ai.models.generateContent({
         model: modelId,
         contents: history,

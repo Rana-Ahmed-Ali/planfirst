@@ -1,20 +1,41 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="/ahmed_ali_name_reveal.html" />
-</div>
+# Planfirst
 
-# Run and deploy your AI Studio app
+An elite strategic planning assistant that transforms your raw ideas into comprehensive, actionable execution plans.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/4627eb9f-278c-4705-a0d6-666b0a24335c
+- **Dynamic Discovery**: Intelligent questioning to understand your vision.
+- **Viability Assessment**: Instant feedback on your idea's potential.
+- **Comprehensive Plans**: Detailed markdown plans including goals, risks, and next steps.
+- **Multi-Model Support**: Use Google Gemini or OpenRouter models.
+- **User-Provided API Keys**: Securely use your own API keys via the settings menu.
 
-## Run Locally
+## Getting Started
 
-**Prerequisites:**  Node.js
+### Prerequisites
 
+- Node.js and npm installed.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Installation
+
+1. Clone the repository.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+### API Configuration
+
+To use the app, you need to provide your own API keys:
+1. Open the app in your browser.
+2. Click the **Settings** (gear) icon in the header.
+3. Enter your **Google Gemini** or **OpenRouter** API keys.
+4. Keys are stored locally in your browser and are never sent to our servers.
+
+## License
+
+Apache-2.0
