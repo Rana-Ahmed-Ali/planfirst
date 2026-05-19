@@ -31,7 +31,9 @@ import {
   FileText,
   X,
   Settings,
-  Key
+  Key,
+  Download,
+  Upload
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "./lib/utils";
@@ -154,6 +156,71 @@ export default function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRefBackup = useRef<HTMLInputElement>(null);
+
+  const handleExportSessions = () => {
+    try {
+      const dataStr = JSON.stringify(sessions, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `planfirst_backup_${new Date().toISOString().slice(0,10)}.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    } catch (e) {
+      alert("Failed to export backup: " + (e instanceof Error ? e.message : String(e)));
+    }
+  };
+
+  const handleImportSessions = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    fileReader.onload = event => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (!Array.isArray(parsed)) {
+          throw new Error("Backup file must contain an array of sessions.");
+        }
+        
+        const validated = parsed.filter(session => {
+          return session && typeof session.id === "string" && typeof session.title === "string" && Array.isArray(session.messages);
+        });
+        
+        if (validated.length === 0) {
+          throw new Error("No valid sessions found in the backup file.");
+        }
+
+        setSessions(prev => {
+          const existingIds = new Set(prev.map(s => s.id));
+          const newSessions = [...prev];
+          
+          validated.forEach(session => {
+            if (existingIds.has(session.id)) {
+              session.id = session.id + "_" + Date.now();
+            }
+            newSessions.push(session);
+          });
+          
+          return newSessions;
+        });
+
+        alert(`Successfully imported ${validated.length} sessions!`);
+        if (validated.length > 0) {
+          setCurrentSessionId(validated[0].id);
+        }
+      } catch (error) {
+        alert("Failed to import backup: " + (error instanceof Error ? error.message : String(error)));
+      }
+    };
+    fileReader.readAsText(files[0]);
+    if (fileInputRefBackup.current) {
+      fileInputRefBackup.current.value = "";
+    }
+  };
 
   const contextDocs = currentSession?.contextDocs || [];
 
@@ -373,6 +440,31 @@ export default function App() {
                   No sessions yet.
                 </div>
               )}
+            </div>
+            
+            {/* Backup & Restore Action Bar */}
+            <div className="p-4 border-t border-slate-800/50 flex gap-2 no-print bg-slate-900/10">
+              <button 
+                onClick={handleExportSessions}
+                className="flex-1 py-2 px-3 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-400 hover:text-white hover:border-slate-700 transition-all font-bold text-xs flex items-center justify-center gap-1.5"
+                title="Export all strategies to a JSON backup file"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-400" /> Export
+              </button>
+              <button 
+                onClick={() => fileInputRefBackup.current?.click()}
+                className="flex-1 py-2 px-3 rounded-lg border border-slate-800 bg-slate-900/50 text-slate-400 hover:text-white hover:border-slate-700 transition-all font-bold text-xs flex items-center justify-center gap-1.5"
+                title="Import strategies from a JSON backup file"
+              >
+                <Upload className="w-3.5 h-3.5 text-blue-400" /> Import
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRefBackup}
+                onChange={handleImportSessions}
+                accept=".json"
+                className="hidden"
+              />
             </div>
           </motion.div>
         )}
