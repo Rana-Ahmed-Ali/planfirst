@@ -86,4 +86,5 @@ export interface ChatSession {
   createdAt: number;
   messages: ChatMessage[];
   contextDocs?: ContextDocument[];
+  tag?: string;
 }

@@ -87,9 +87,17 @@ export default function App() {
     () => sessions.length > 0 ? sessions[0].id : null
   );
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTagFilter, setSelectedTagFilter] = useState("all");
 
   const currentSession = sessions.find(s => s.id === currentSessionId);
   const messages = currentSession?.messages || [];
+
+  const filteredSessions = sessions.filter(s => {
+    const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTag = selectedTagFilter === "all" || s.tag === selectedTagFilter;
+    return matchesSearch && matchesTag;
+  });
 
   const setMessages = (updater: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
     setSessions(prevSessions => {
@@ -406,16 +414,83 @@ export default function App() {
             transition={{ duration: 0.2 }}
             className="h-full border-r border-slate-800/50 bg-[#0A0C10]/95 backdrop-blur-xl flex flex-col w-[280px] z-20 flex-shrink-0 relative no-print"
           >
-            <div className="p-4 border-b border-slate-800/50 flex flex-col gap-4">
+            <div className="p-4 border-b border-slate-800/50 flex flex-col gap-3">
               <div className="flex justify-between items-center px-1 pt-1">
                 <span className="text-xs font-black uppercase tracking-widest text-emerald-400">Your Sessions</span>
               </div>
               <button onClick={handleNewSession} className="w-full py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center gap-2 hover:bg-emerald-500/20 transition-all">
                 <Plus className="w-4 h-4" /> New Strategy
               </button>
+              
+              {/* Search Bar */}
+              <input 
+                type="text"
+                placeholder="Search strategies..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 transition-all"
+              />
+
+              {/* Category tags horizontal list */}
+              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
+                <button
+                  onClick={() => setSelectedTagFilter("all")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex-shrink-0",
+                    selectedTagFilter === "all" ? "bg-slate-800 border-slate-700 text-white" : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setSelectedTagFilter("web")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex-shrink-0",
+                    selectedTagFilter === "web" ? "bg-emerald-500/20 border-emerald-500/30 text-emerald-400" : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  Web
+                </button>
+                <button
+                  onClick={() => setSelectedTagFilter("crypto")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex-shrink-0",
+                    selectedTagFilter === "crypto" ? "bg-cyan-500/20 border-cyan-500/30 text-cyan-400" : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  Crypto
+                </button>
+                <button
+                  onClick={() => setSelectedTagFilter("security")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex-shrink-0",
+                    selectedTagFilter === "security" ? "bg-red-500/20 border-red-500/30 text-red-400" : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  Security
+                </button>
+                <button
+                  onClick={() => setSelectedTagFilter("biz")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex-shrink-0",
+                    selectedTagFilter === "biz" ? "bg-amber-500/20 border-amber-500/30 text-amber-400" : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  Biz
+                </button>
+                <button
+                  onClick={() => setSelectedTagFilter("marketing")}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex-shrink-0",
+                    selectedTagFilter === "marketing" ? "bg-purple-500/20 border-purple-500/30 text-purple-400" : "bg-transparent border-transparent text-slate-500 hover:text-slate-300"
+                  )}
+                >
+                  Marketing
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800">
-              {sessions.map(s => (
+              {filteredSessions.map(s => (
                 <div 
                   key={s.id} 
                   className={cn(
@@ -426,18 +501,30 @@ export default function App() {
                 >
                    <MessageSquare className="w-4 h-4 flex-shrink-0" />
                    <div className="flex-1 truncate text-sm font-medium">{s.title}</div>
+                   {s.tag && (
+                     <span className={cn(
+                       "text-[9px] px-1.5 py-0.5 rounded-md font-bold uppercase tracking-wide border flex-shrink-0",
+                       s.tag === "web" && "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+                       s.tag === "crypto" && "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
+                       s.tag === "security" && "bg-red-500/10 border-red-500/20 text-red-400",
+                       s.tag === "biz" && "bg-amber-500/10 border-amber-500/20 text-amber-400",
+                       s.tag === "marketing" && "bg-purple-500/10 border-purple-500/20 text-purple-400"
+                     )}>
+                       {s.tag}
+                     </span>
+                   )}
                    <button 
                       onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} 
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-400 transition-colors"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-400 transition-colors flex-shrink-0"
                       title="Delete Session"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                    </button>
                 </div>
               ))}
-              {sessions.length === 0 && (
+              {filteredSessions.length === 0 && (
                 <div className="text-center py-6 text-slate-600 text-sm italic">
-                  No sessions yet.
+                  {sessions.length === 0 ? "No sessions yet." : "No matching sessions found."}
                 </div>
               )}
             </div>
@@ -511,6 +598,23 @@ export default function App() {
                 )} />
                 {pakiHealth.status === "ready" ? "READY" : pakiHealth.status.toUpperCase()}
               </div>
+            )}
+            {currentSession && (
+              <select
+                value={currentSession.tag || "none"}
+                onChange={(e) => {
+                  const newTag = e.target.value === "none" ? undefined : e.target.value;
+                  setSessions(prev => prev.map(s => s.id === currentSessionId ? { ...s, tag: newTag } : s));
+                }}
+                className="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-2.5 py-1 outline-none focus:border-emerald-500 transition-colors cursor-pointer no-print animate-fade-in"
+              >
+                <option value="none">General Category</option>
+                <option value="web">Web App</option>
+                <option value="crypto">Crypto / Web3</option>
+                <option value="security">Security</option>
+                <option value="biz">Business</option>
+                <option value="marketing">Marketing</option>
+              </select>
             )}
             <select 
               value={selectedModel}
