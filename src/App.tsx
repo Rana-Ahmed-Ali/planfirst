@@ -994,12 +994,71 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+interface RoadmapNode {
+  title: string;
+  description: string;
+  phaseNumber: number;
+}
+
+const parseRoadmap = (markdown: string): RoadmapNode[] => {
+  const nodes: RoadmapNode[] = [];
+  const lines = markdown.split("\n");
+  let currentPhase: RoadmapNode | null = null;
+  let phaseCount = 0;
+
+  for (let line of lines) {
+    line = line.trim();
+    const headerMatch = line.match(/^(#{1,3})\s+(Phase\s+\d+|[Pp]hase\s+\d+|[Ss]tep\s+\d+|[Mm]ilestone\s+\d+)([:\-\s\w]+)?/);
+    if (headerMatch) {
+      phaseCount++;
+      const title = headerMatch[3] ? headerMatch[3].replace(/^[:\-\s]+/, "").trim() : headerMatch[2];
+      currentPhase = {
+        title: title || headerMatch[2],
+        description: "",
+        phaseNumber: phaseCount
+      };
+      nodes.push(currentPhase);
+    } else if (currentPhase) {
+      if (line && !line.startsWith("#") && currentPhase.description.length < 250) {
+        currentPhase.description += (currentPhase.description ? " " : "") + line.replace(/[*_`]/g, "");
+      }
+    }
+  }
+
+  if (nodes.length === 0) {
+    phaseCount = 0;
+    for (let line of lines) {
+      line = line.trim();
+      const headerMatch = line.match(/^##\s+(.+)$/);
+      if (headerMatch) {
+        phaseCount++;
+        currentPhase = {
+          title: headerMatch[1].replace(/[*_`]/g, "").trim(),
+          description: "",
+          phaseNumber: phaseCount
+        };
+        nodes.push(currentPhase);
+      } else if (currentPhase) {
+        if (line && !line.startsWith("#") && currentPhase.description.length < 250) {
+          currentPhase.description += (currentPhase.description ? " " : "") + line.replace(/[*_`]/g, "");
+        }
+      }
+    }
+  }
+
+  return nodes.map(n => ({
+    ...n,
+    description: n.description.length > 180 ? n.description.substring(0, 180).trim() + "..." : n.description
+  }));
+};
+
 function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { message: ChatMessage, onOptionSelect: (val: string) => void, onPlanEdit: (newContent: string, completedTasks?: string[]) => void, onRemoveIsNew: () => void }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [checkedOptions, setCheckedOptions] = useState<string[]>([]);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
   const [customTexts, setCustomTexts] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<"document" | "roadmap">("document");
 
   useEffect(() => {
     if (message.role === "assistant" && typeof message.content !== "string" && (message.content as any).type === "plan") {
@@ -1270,13 +1329,34 @@ function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { m
             </div>
           </div>
 
-          <div className="flex justify-end mb-4 no-print">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800/50 pb-4 mb-6 gap-4 no-print">
+            <div className="flex gap-2 bg-slate-900/60 p-1.5 rounded-2xl border border-slate-800/80">
+              <button
+                onClick={() => setActiveTab("document")}
+                className={cn(
+                  "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                  activeTab === "document" ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200"
+                )}
+              >
+                Plan Document
+              </button>
+              <button
+                onClick={() => setActiveTab("roadmap")}
+                className={cn(
+                  "px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all",
+                  activeTab === "roadmap" ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20" : "text-slate-400 hover:text-slate-200"
+                )}
+              >
+                Roadmap Timeline
+              </button>
+            </div>
+            
             <button 
               onClick={() => {
                 if (isEditing) onPlanEdit(editContent);
                 setIsEditing(!isEditing);
               }}
-              className="text-emerald-400 hover:text-white text-sm font-bold flex items-center gap-2 bg-emerald-500/10 px-4 py-2 rounded-xl transition-colors mb-2 border border-emerald-500/20"
+              className="text-emerald-400 hover:text-white text-sm font-bold flex items-center gap-2 bg-emerald-500/10 px-4 py-2 rounded-xl transition-colors border border-emerald-500/20"
             >
               {isEditing ? <CheckCircle2 className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
               {isEditing ? "Save Edits" : "Edit Plan Markdown"}
@@ -1285,11 +1365,11 @@ function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { m
 
           {isEditing ? (
             <textarea
-              className="w-full h-[600px] bg-slate-900 border border-slate-700 rounded-xl p-6 text-slate-300 font-mono text-sm focus:outline-none focus:border-emerald-500 whitespace-pre-wrap"
+              className="w-full h-[600px] bg-slate-900 border border-slate-700 rounded-xl p-6 text-slate-300 font-mono text-sm focus:outline-none focus:border-emerald-500 whitespace-pre-wrap animate-fade-in"
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
             />
-          ) : (
+          ) : activeTab === "document" ? (
             <div className="prose prose-invert prose-emerald max-w-none 
               prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight
               prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-lg
@@ -1301,6 +1381,44 @@ function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { m
               space-y-12
             ">
               <TypewriterMarkdown content={content.content} isNew={message.isNew} onComplete={onRemoveIsNew} />
+            </div>
+          ) : (
+            <div className="space-y-12 py-6 relative">
+              <div className="absolute left-6 top-10 bottom-10 w-0.5 bg-gradient-to-b from-emerald-500 to-blue-500 opacity-20 hidden sm:block" />
+
+              {parseRoadmap(content.content).map((node, index) => (
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="relative flex flex-col sm:flex-row gap-6 sm:pl-16 group"
+                >
+                  <div className="absolute left-3.5 sm:left-4 top-1 w-5 h-5 rounded-full border-2 border-emerald-500 bg-slate-900 flex items-center justify-center z-10 transition-all group-hover:scale-125 group-hover:border-emerald-400">
+                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  </div>
+
+                  <div className="flex-1 bg-slate-900 border border-slate-800 rounded-3xl p-6 hover:border-slate-700 transition-all shadow-xl space-y-3">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-[10px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
+                        Phase {node.phaseNumber}
+                      </span>
+                      <h4 className="text-lg font-bold text-white tracking-tight">{node.title}</h4>
+                    </div>
+                    {node.description && (
+                      <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">
+                        {node.description}
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+
+              {parseRoadmap(content.content).length === 0 && (
+                <div className="text-center py-12 text-slate-500 italic">
+                  Could not extract roadmap milestones from this plan. Please read the full Plan Document.
+                </div>
+              )}
             </div>
           )}
 
