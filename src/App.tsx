@@ -1480,10 +1480,24 @@ function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { m
             );
           })()}
 
-          <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4 shadow-2xl no-print">
+          <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-6 shadow-2xl no-print">
              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
-             <h3 className="text-2xl font-bold text-white">Your journey starts here.</h3>
-             <p className="text-slate-400 pb-4">This plan is yours. Export it or ask me a follow-up question below.</p>
+             <div className="space-y-2">
+               <h3 className="text-2xl font-bold text-white">Your journey starts here.</h3>
+               <p className="text-slate-400 max-w-md mx-auto text-sm leading-relaxed pb-2">
+                 This plan is yours. Export it, let me walk you through execution steps, or ask follow-up questions.
+               </p>
+             </div>
+             
+             <div className="flex justify-center pb-4 border-b border-slate-800/40 mb-2">
+               <button
+                 onClick={() => onOptionSelect("I need a highly detailed, step-by-step walkthrough to execute this strategy. Please guide me like a student: break down what to do first, second, and so on, with precise, beginner-friendly instructions.")}
+                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold rounded-2xl transition-all shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95 text-sm"
+               >
+                 <Sparkles className="w-4 h-4" />
+                 Guide Me Detailed (Step-by-Step)
+               </button>
+             </div>
              <div className="flex justify-center gap-4 flex-wrap">
                <button 
                   onClick={() => window.print()}
