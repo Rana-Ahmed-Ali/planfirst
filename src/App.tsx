@@ -148,6 +148,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState("gemini-2.5-flash");
+  const [pakiHealth, setPakiHealth] = useState<{ status: string; message: string } | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [apiKeys, setApiKeys] = useState<ApiKeys>(() => getApiKeys());
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -233,6 +234,32 @@ export default function App() {
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, [input]);
+
+  useEffect(() => {
+    let active = true;
+    const checkHealth = async () => {
+      try {
+        const res = await fetch("http://127.0.0.1:8000/health");
+        if (!res.ok) throw new Error("HTTP error " + res.status);
+        const data = await res.json();
+        if (active) setPakiHealth(data);
+      } catch (e) {
+        if (active) {
+          setPakiHealth({
+            status: "offline",
+            message: "Local server is offline or unreachable."
+          });
+        }
+      }
+    };
+
+    checkHealth();
+    const interval = setInterval(checkHealth, 15000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleSubmit = async (e?: React.FormEvent, manualInput?: string) => {
     e?.preventDefault();
@@ -371,7 +398,28 @@ export default function App() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {selectedModel === "paki-gpt" && pakiHealth && (
+              <div 
+                className={cn(
+                  "flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-bold border transition-all no-print",
+                  pakiHealth.status === "ready" && "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+                  pakiHealth.status === "cloudflare" && "bg-amber-500/10 border-amber-500/20 text-amber-400 animate-pulse",
+                  pakiHealth.status === "logged_out" && "bg-orange-500/10 border-orange-500/20 text-orange-400 animate-pulse",
+                  pakiHealth.status === "offline" && "bg-red-500/10 border-red-500/20 text-red-400"
+                )}
+                title={pakiHealth.message}
+              >
+                <span className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  pakiHealth.status === "ready" && "bg-emerald-400",
+                  pakiHealth.status === "cloudflare" && "bg-amber-400",
+                  pakiHealth.status === "logged_out" && "bg-orange-400",
+                  pakiHealth.status === "offline" && "bg-red-400"
+                )} />
+                {pakiHealth.status === "ready" ? "READY" : pakiHealth.status.toUpperCase()}
+              </div>
+            )}
             <select 
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
