@@ -351,7 +351,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 flex flex-col h-screen relative z-10 w-full max-w-5xl mx-auto border-x border-slate-800/50 bg-[#0A0C10]/80 backdrop-blur-xl">
+      <div className="flex-1 flex flex-col h-screen relative z-10 w-full bg-[#0A0C10]/80 backdrop-blur-xl">
         {/* Header */}
         <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800/50 bg-[#0A0C10]/50 sticky top-0 z-10 backdrop-blur-md">
           <div className="flex items-center gap-4">
@@ -458,92 +458,94 @@ export default function App() {
         </header>
 
         {/* Messages */}
-        <main className="flex-1 overflow-y-auto px-6 py-8 space-y-8 scrollbar-thin scrollbar-thumb-slate-800">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto">
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-6"
-              >
-                <Target className="w-8 h-8 text-emerald-400" />
-              </motion.div>
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="text-3xl font-bold text-white mb-4"
-              >
-                What's your vision?
-              </motion.h2>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-slate-400 text-lg mb-8 leading-relaxed"
-              >
-                Share your raw idea — a business, a project, or a personal goal. I'll help you turn it into a comprehensive execution plan.
-              </motion.p>
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full"
-              >
-                {[
-                  "A zero-waste local coffee subscription",
-                  "A marketplace for vintage watch parts",
-                  "Organizing a tech conference in Tokyo",
-                  "Writing a sci-fi novel about AI judges"
-                ].map((hint, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSubmit(undefined, hint)}
-                    className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left text-sm text-slate-300 group"
-                  >
-                    <span className="opacity-60 group-hover:opacity-100 transition-opacity">" {hint} "</span>
-                  </button>
-                ))}
-              </motion.div>
-            </div>
-          ) : (
-            messages.map((msg, idx) => (
-              <MessageItem 
-                key={idx} 
-                message={msg} 
-                onOptionSelect={(val) => handleSubmit(undefined, val)} 
-                onPlanEdit={(newContent, completedTasks) => {
-                  setMessages(prev => {
-                    const copy = [...prev];
-                    const target = copy[idx];
-                    if (target.role === "assistant" && typeof target.content !== "string" && target.content.type === "plan") {
-                      target.content = { ...target.content, content: newContent, completedTasks: completedTasks ?? target.content.completedTasks } as any;
-                    }
-                    return copy;
-                  });
-                }}
-                onRemoveIsNew={() => {
-                  setMessages(prev => {
-                    const copy = [...prev];
-                    if (copy[idx]) {
-                      copy[idx] = { ...copy[idx], isNew: false };
-                    }
-                    return copy;
-                  });
-                }}
-              />
-            ))
-          )}
-          {isLoading && (
-            <DynamicLoader />
-          )}
-          {error && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3">
-              <AlertTriangle className="w-5 h-5 flex-shrink-0" />
-              {error}
-            </div>
-          )}
-          <div ref={scrollRef} className="h-4" />
+        <main className="flex-1 overflow-y-auto px-6 py-8 scrollbar-thin scrollbar-thumb-slate-800">
+          <div className="max-w-4xl mx-auto w-full space-y-8 flex flex-col">
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-16 h-16 rounded-2xl bg-slate-800/50 flex items-center justify-center mb-6"
+                >
+                  <Target className="w-8 h-8 text-emerald-400" />
+                </motion.div>
+                <motion.h2 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-3xl font-bold text-white mb-4"
+                >
+                  What's your vision?
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-slate-400 text-lg mb-8 leading-relaxed"
+                >
+                  Share your raw idea — a business, a project, or a personal goal. I'll help you turn it into a comprehensive execution plan.
+                </motion.p>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full"
+                >
+                  {[
+                    "A zero-waste local coffee subscription",
+                    "A marketplace for vintage watch parts",
+                    "Organizing a tech conference in Tokyo",
+                    "Writing a sci-fi novel about AI judges"
+                  ].map((hint, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSubmit(undefined, hint)}
+                      className="p-4 rounded-xl border border-slate-800 bg-slate-900/50 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-left text-sm text-slate-300 group"
+                    >
+                      <span className="opacity-60 group-hover:opacity-100 transition-opacity">" {hint} "</span>
+                    </button>
+                  ))}
+                </motion.div>
+              </div>
+            ) : (
+              messages.map((msg, idx) => (
+                <MessageItem 
+                  key={idx} 
+                  message={msg} 
+                  onOptionSelect={(val) => handleSubmit(undefined, val)} 
+                  onPlanEdit={(newContent, completedTasks) => {
+                    setMessages(prev => {
+                      const copy = [...prev];
+                      const target = copy[idx];
+                      if (target.role === "assistant" && typeof target.content !== "string" && target.content.type === "plan") {
+                        target.content = { ...target.content, content: newContent, completedTasks: completedTasks ?? target.content.completedTasks } as any;
+                      }
+                      return copy;
+                    });
+                  }}
+                  onRemoveIsNew={() => {
+                    setMessages(prev => {
+                      const copy = [...prev];
+                      if (copy[idx]) {
+                        copy[idx] = { ...copy[idx], isNew: false };
+                      }
+                      return copy;
+                    });
+                  }}
+                />
+              ))
+            )}
+            {isLoading && (
+              <DynamicLoader />
+            )}
+            {error && (
+              <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                {error}
+              </div>
+            )}
+            <div ref={scrollRef} className="h-4" />
+          </div>
         </main>
 
         {/* Input */}
