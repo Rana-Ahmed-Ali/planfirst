@@ -282,11 +282,11 @@ export default function App() {
 
       setMessages(prev => [...prev, ...newMessages]);
     } catch (err: any) {
-      const msg = err?.message || "";
+      const msg = err?.message || "Failed to forge the plan. Please check your connection and try again.";
       if (msg.includes("API key")) {
-        setError("Invalid or missing Gemini API key. Please check your .env file.");
+        setError("Invalid or missing API key. Please check your settings.");
       } else {
-        setError("Failed to forge the plan. Please check your connection and try again.");
+        setError(msg);
       }
       console.error(err);
     } finally {

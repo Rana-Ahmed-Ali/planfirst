@@ -198,8 +198,15 @@ export async function generateResponse(
 
     if (!text) throw new Error("Empty response from AI");
 
+    let repairedText = text;
     try {
-      const parsed = JSON.parse(text);
+      repairedText = cleanAndRepairJson(text);
+    } catch (repairError) {
+      console.warn("Failed to repair JSON text:", repairError);
+    }
+
+    try {
+      const parsed = JSON.parse(repairedText);
       let objectsToValidate: any[];
       if (parsed && parsed.responses && Array.isArray(parsed.responses)) {
         objectsToValidate = parsed.responses;
@@ -210,7 +217,7 @@ export async function generateResponse(
     } catch (e) {
       if (e instanceof SyntaxError) {
         try {
-          const objectsStr = text.split(/}\s*{/).map((str, i, arr) => {
+          const objectsStr = repairedText.split(/}\s*{/).map((str, i, arr) => {
             if (i > 0) str = '{' + str;
             if (i < arr.length - 1) str = str + '}';
             return JSON.parse(str);
@@ -221,7 +228,7 @@ export async function generateResponse(
         }
       } else {
         console.error("Zod Validation Error:", e);
-        throw new Error("AI output failed strict schema validation. The AI hallucinated a bad format.");
+        throw new Error("AI output failed strict schema validation. The AI hallucinated a bad format: " + (e instanceof Error ? e.message : String(e)));
       }
     }
   } catch (error) {
@@ -229,3 +236,120 @@ export async function generateResponse(
     throw error;
   }
 }
+
+function extractJsonString(text: string): string {
+  // Check if there are markdown code blocks
+  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/g;
+  const matches = [...text.matchAll(codeBlockRegex)];
+  if (matches.length > 0) {
+    return matches.map(m => m[1].trim()).join("\n");
+  }
+  
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  const firstBracket = text.indexOf('[');
+  const lastBracket = text.lastIndexOf(']');
+  
+  let start = -1;
+  let end = -1;
+  
+  if (firstBrace !== -1 && lastBrace !== -1) {
+    if (firstBracket !== -1 && firstBracket < firstBrace && lastBracket !== -1 && lastBracket > lastBrace) {
+      start = firstBracket;
+      end = lastBracket;
+    } else {
+      start = firstBrace;
+      end = lastBrace;
+    }
+  } else if (firstBracket !== -1 && lastBracket !== -1) {
+    start = firstBracket;
+    end = lastBracket;
+  }
+  
+  if (start !== -1 && end !== -1 && end > start) {
+    return text.substring(start, end + 1).trim();
+  }
+  
+  return text.trim();
+}
+
+function cleanAndRepairJson(text: string): string {
+  let str = extractJsonString(text);
+
+  let inString = false;
+  let escaped = false;
+  let result = "";
+  const stack: string[] = [];
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+
+    if (inString) {
+      if (escaped) {
+        result += char;
+        escaped = false;
+      } else if (char === '\\') {
+        result += char;
+        escaped = true;
+      } else if (char === '"') {
+        // Look ahead to check if this is a structural quote or an unescaped quote.
+        let nextChar = '';
+        let j = i + 1;
+        while (j < str.length) {
+          const c = str[j];
+          if (c !== ' ' && c !== '\t' && c !== '\n' && c !== '\r') {
+            nextChar = c;
+            break;
+          }
+          j++;
+        }
+
+        const isStructural = nextChar === ':' || nextChar === ',' || nextChar === '}' || nextChar === ']';
+
+        if (isStructural) {
+          result += char;
+          inString = false;
+        } else {
+          result += '\\"';
+        }
+      } else if (char === '\n') {
+        result += '\\n';
+      } else if (char === '\r') {
+        result += '\\r';
+      } else if (char === '\t') {
+        result += '\\t';
+      } else {
+        result += char;
+      }
+    } else {
+      result += char;
+      if (char === '"') {
+        inString = true;
+        escaped = false;
+      } else if (char === '{') {
+        stack.push('}');
+      } else if (char === '[') {
+        stack.push(']');
+      } else if (char === '}') {
+        if (stack.length > 0 && stack[stack.length - 1] === '}') {
+          stack.pop();
+        }
+      } else if (char === ']') {
+        if (stack.length > 0 && stack[stack.length - 1] === ']') {
+          stack.pop();
+        }
+      }
+    }
+  }
+
+  if (inString) {
+    result += '"';
+  }
+
+  while (stack.length > 0) {
+    result += stack.pop();
+  }
+
+  return result;
+}
+
