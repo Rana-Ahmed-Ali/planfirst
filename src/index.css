@@ -21,3 +21,185 @@
     @apply bg-slate-700;
   }
 }
+
+@media print {
+  body, html {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+
+  /* Make sure the main content pane spans the full page */
+  main,
+  div,
+  section {
+    background: transparent !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+
+  /* Ensure the page layout is flow-based and takes 100% width without scrollbars */
+  body, 
+  #root,
+  main,
+  .flex-1 {
+    overflow: visible !important;
+    height: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Set margins for printable pages */
+  @page {
+    margin: 2cm;
+  }
+
+  /* Plan title and headers formatting */
+  h1, h2, h3, h4, h5, h6 {
+    color: #000000 !important;
+    page-break-after: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  h1 {
+    font-size: 28pt !important;
+    font-weight: bold !important;
+    margin-top: 0 !important;
+    margin-bottom: 20pt !important;
+    text-align: center !important;
+  }
+
+  h2 {
+    font-size: 20pt !important;
+    font-weight: bold !important;
+    margin-top: 30pt !important;
+    margin-bottom: 12pt !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    padding-bottom: 6pt !important;
+    page-break-before: always !important;
+  }
+
+  /* Prevent page breaks immediately after headers or inside sections */
+  h2:first-of-type {
+    page-break-before: avoid !important;
+  }
+
+  h3 {
+    font-size: 14pt !important;
+    font-weight: bold !important;
+    margin-top: 20pt !important;
+    margin-bottom: 8pt !important;
+  }
+
+  /* Format paragraph text nicely */
+  p, li, span, td, th {
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+    color: #334155 !important;
+  }
+
+  /* Avoid splitting paragraph or list items across pages */
+  p, li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  li {
+    margin-bottom: 6pt !important;
+  }
+
+  /* Tables clean formatting */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    margin: 20pt 0 !important;
+    page-break-inside: avoid !important;
+  }
+
+  th, td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 8pt 10pt !important;
+  }
+
+  th {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+    font-weight: bold !important;
+  }
+
+  /* Reset code block styling for print */
+  pre, code {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 4px !important;
+    padding: 8pt !important;
+    font-size: 9.5pt !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Reset blockquotes styling */
+  blockquote {
+    border-left: 4px solid #cbd5e1 !important;
+    padding-left: 15pt !important;
+    margin: 15pt 0 !important;
+    color: #475569 !important;
+    font-style: italic !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Print-specific layout styling for the checklist container */
+  .max-w-2xl {
+    max-width: 100% !important;
+    margin-top: 30pt !important;
+  }
+
+  /* Checklist printable styling */
+  .max-w-2xl border {
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    padding: 20pt !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Checkbox tasks buttons */
+  button.flex {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    opacity: 1 !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 8pt !important;
+  }
+
+  button.flex span {
+    color: #0f172a !important;
+    text-decoration: none !important;
+  }
+
+  button.flex div {
+    border-color: #0f172a !important;
+  }
+
+  /* Checked/completed items print representation */
+  button.flex.opacity-60 {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  button.flex.opacity-60 span {
+    color: #64748b !important;
+    text-decoration: line-through !important;
+  }
+}
+

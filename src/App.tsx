@@ -297,7 +297,7 @@ export default function App() {
   return (
     <div className="flex h-screen bg-[#0A0C10] text-slate-200 font-sans selection:bg-emerald-500/30 overflow-hidden">
       {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 no-print">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 blur-[120px] rounded-full" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 blur-[120px] rounded-full" />
       </div>
@@ -310,7 +310,7 @@ export default function App() {
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="h-full border-r border-slate-800/50 bg-[#0A0C10]/95 backdrop-blur-xl flex flex-col w-[280px] z-20 flex-shrink-0 relative"
+            className="h-full border-r border-slate-800/50 bg-[#0A0C10]/95 backdrop-blur-xl flex flex-col w-[280px] z-20 flex-shrink-0 relative no-print"
           >
             <div className="p-4 border-b border-slate-800/50 flex flex-col gap-4">
               <div className="flex justify-between items-center px-1 pt-1">
@@ -353,7 +353,7 @@ export default function App() {
 
       <div className="flex-1 flex flex-col h-screen relative z-10 w-full bg-[#0A0C10]/80 backdrop-blur-xl">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800/50 bg-[#0A0C10]/50 sticky top-0 z-10 backdrop-blur-md">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-slate-800/50 bg-[#0A0C10]/50 sticky top-0 z-10 backdrop-blur-md no-print">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
@@ -549,7 +549,7 @@ export default function App() {
         </main>
 
         {/* Input */}
-        <footer className="p-6 border-t border-slate-800/50 bg-[#0A0C10]/80 sticky bottom-0 z-10">
+        <footer className="p-6 border-t border-slate-800/50 bg-[#0A0C10]/80 sticky bottom-0 z-10 no-print">
           <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto flex flex-col gap-2">
             {contextDocs.length > 0 && (
                <div className="flex flex-wrap gap-2 mb-1 px-1">
@@ -719,7 +719,7 @@ function CopyButton({ text }: { text: string }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }}
-      className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-500 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100 mt-2"
+      className="text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-500 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100 mt-2 no-print"
       title="Copy to clipboard"
     >
       {copied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
@@ -1004,7 +1004,7 @@ function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { m
             </div>
           </div>
 
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end mb-4 no-print">
             <button 
               onClick={() => {
                 if (isEditing) onPlanEdit(editContent);
@@ -1074,7 +1074,7 @@ function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { m
             </div>
           )}
 
-          <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4 shadow-2xl">
+          <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4 shadow-2xl no-print">
              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
              <h3 className="text-2xl font-bold text-white">Your journey starts here.</h3>
              <p className="text-slate-400 pb-4">This plan is yours. Export it or ask me a follow-up question below.</p>
