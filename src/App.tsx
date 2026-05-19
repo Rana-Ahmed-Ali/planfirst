@@ -1179,40 +1179,62 @@ function MessageItem({ message, onOptionSelect, onPlanEdit, onRemoveIsNew }: { m
           )}
 
           {/* Interactive Checklist */}
-          {content.checklist && content.checklist.length > 0 && (
-            <div className="max-w-2xl mx-auto space-y-4 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl mt-12 mb-12">
-               <h3 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
-                 <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Quick-Start Checklist
-               </h3>
-               <div className="space-y-3">
-                 {content.checklist.map((task: string, i: number) => {
-                   const isDone = completedTasks.includes(task);
-                   return (
-                     <button
-                       key={i}
-                       onClick={() => {
-                         const newCompleted = isDone ? completedTasks.filter(t => t !== task) : [...completedTasks, task];
-                         setCompletedTasks(newCompleted);
-                         onPlanEdit(editContent, newCompleted); 
-                       }}
-                       className={cn(
-                         "flex items-start gap-4 p-4 rounded-2xl w-full text-left transition-all border shadow-sm",
-                         isDone ? "bg-emerald-500/10 border-emerald-500/20 opacity-60" : "bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800"
-                       )}
-                     >
-                       <div className={cn(
-                         "w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors",
-                         isDone ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-500"
-                       )}>
-                         {isDone && <CheckCircle2 className="w-4 h-4" />}
-                       </div>
-                       <span className={cn("text-sm font-medium leading-relaxed", isDone ? "text-emerald-400 line-through" : "text-white")}>{task}</span>
-                     </button>
-                   );
-                 })}
-               </div>
-            </div>
-          )}
+          {content.checklist && content.checklist.length > 0 && (() => {
+            const totalTasks = content.checklist.length;
+            const completedCount = completedTasks.filter(t => content.checklist.includes(t)).length;
+            const percentage = totalTasks > 0 ? Math.round((completedCount / totalTasks) * 100) : 0;
+            return (
+              <div className="max-w-2xl mx-auto space-y-6 bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl mt-12 mb-12">
+                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                      <CheckCircle2 className="w-6 h-6 text-emerald-500" /> Quick-Start Checklist
+                    </h3>
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+                      <span className="text-emerald-400">{completedCount}</span> / <span>{totalTasks} Tasks</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">{percentage}%</span>
+                    </div>
+                 </div>
+
+                 {/* Progress Bar Container */}
+                 <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden relative">
+                   <motion.div 
+                     initial={{ width: 0 }}
+                     animate={{ width: `${percentage}%` }}
+                     transition={{ type: "spring", stiffness: 80, damping: 15 }}
+                     className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.3)]"
+                   />
+                 </div>
+
+                 <div className="space-y-3">
+                   {content.checklist.map((task: string, i: number) => {
+                     const isDone = completedTasks.includes(task);
+                     return (
+                       <button
+                         key={i}
+                         onClick={() => {
+                           const newCompleted = isDone ? completedTasks.filter(t => t !== task) : [...completedTasks, task];
+                           setCompletedTasks(newCompleted);
+                           onPlanEdit(editContent, newCompleted); 
+                         }}
+                         className={cn(
+                           "flex items-start gap-4 p-4 rounded-2xl w-full text-left transition-all border shadow-sm",
+                           isDone ? "bg-emerald-500/10 border-emerald-500/20 opacity-60" : "bg-slate-800/50 border-slate-700 hover:border-slate-500 hover:bg-slate-800"
+                         )}
+                       >
+                         <div className={cn(
+                           "w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors",
+                           isDone ? "border-emerald-500 bg-emerald-500 text-white" : "border-slate-500"
+                         )}>
+                           {isDone && <CheckCircle2 className="w-4 h-4" />}
+                         </div>
+                         <span className={cn("text-sm font-medium leading-relaxed", isDone ? "text-emerald-400 line-through" : "text-white")}>{task}</span>
+                       </button>
+                     );
+                   })}
+                 </div>
+              </div>
+            );
+          })()}
 
           <div className="p-8 rounded-3xl bg-slate-900 border border-slate-800 text-center space-y-4 shadow-2xl no-print">
              <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
