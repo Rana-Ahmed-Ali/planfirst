@@ -33,7 +33,8 @@ import {
   Settings,
   Key,
   Download,
-  Upload
+  Upload,
+  Star
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { cn } from "./lib/utils";
@@ -97,6 +98,14 @@ export default function App() {
     const matchesSearch = s.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTag = selectedTagFilter === "all" || s.tag === selectedTagFilter;
     return matchesSearch && matchesTag;
+  });
+
+  const sortedSessions = [...filteredSessions].sort((a, b) => {
+    const aPinned = a.pinned || false;
+    const bPinned = b.pinned || false;
+    if (aPinned && !bPinned) return -1;
+    if (!aPinned && bPinned) return 1;
+    return b.createdAt - a.createdAt;
   });
 
   const setMessages = (updater: ChatMessage[] | ((prev: ChatMessage[]) => ChatMessage[])) => {
@@ -490,7 +499,7 @@ export default function App() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800">
-              {filteredSessions.map(s => (
+              {sortedSessions.map(s => (
                 <div 
                   key={s.id} 
                   className={cn(
@@ -514,6 +523,19 @@ export default function App() {
                      </span>
                    )}
                    <button 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setSessions(prev => prev.map(session => session.id === s.id ? { ...session, pinned: !session.pinned } : session));
+                      }} 
+                      className={cn(
+                        "p-1.5 rounded-md transition-colors flex-shrink-0",
+                        s.pinned ? "text-amber-400 opacity-100 hover:text-amber-300" : "opacity-0 group-hover:opacity-100 text-slate-500 hover:text-amber-400"
+                      )}
+                      title={s.pinned ? "Unpin Strategy" : "Pin Strategy"}
+                    >
+                      <Star className={cn("w-3.5 h-3.5", s.pinned ? "fill-amber-400" : "")} />
+                   </button>
+                   <button 
                       onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }} 
                       className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-400 transition-colors flex-shrink-0"
                       title="Delete Session"
@@ -522,7 +544,7 @@ export default function App() {
                    </button>
                 </div>
               ))}
-              {filteredSessions.length === 0 && (
+              {sortedSessions.length === 0 && (
                 <div className="text-center py-6 text-slate-600 text-sm italic">
                   {sessions.length === 0 ? "No sessions yet." : "No matching sessions found."}
                 </div>

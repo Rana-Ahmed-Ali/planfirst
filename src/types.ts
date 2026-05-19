@@ -87,4 +87,5 @@ export interface ChatSession {
   messages: ChatMessage[];
   contextDocs?: ContextDocument[];
   tag?: string;
+  pinned?: boolean;
 }
